@@ -1,0 +1,20 @@
+# Build output
+build/
+
+# Icarus
+*.vvp
+*.vcd
+
+# QuestaSim / ModelSim
+work/
+transcript
+modelsim.ini
+*.wlf
+*.ucdb
+*.vstf
+wlft*
+
+# Editors / OS
+.vscode/
+*.swp
+.DS_Store
