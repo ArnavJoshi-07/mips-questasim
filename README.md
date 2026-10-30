@@ -226,7 +226,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 
 | Milestone | Status |
 |-----------|--------|
-| Datapath components and unit tests | ◐ In progress (ALU done) |
+| Datapath components and unit tests | ◐ In progress (ALU, register file done) |
 | Single-cycle reference implementation | ☐ Planned |
 | Five-stage pipeline (hazard-free programs) | ☐ Planned |
 | Forwarding unit | ☐ Planned |
