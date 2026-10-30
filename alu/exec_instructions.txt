@@ -1,0 +1,3 @@
+iverilog -o test ../library.v alu.v tb_alu.v
+vvp test
+gtkwave tb_alu.vcd
