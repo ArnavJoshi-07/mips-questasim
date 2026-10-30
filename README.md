@@ -1,6 +1,6 @@
-# Pipelined MIPS Processor in SystemVerilog
+# Pipelined MIPS Processor in Verilog
 
-A five-stage pipelined implementation of a 32-bit MIPS processor, written in SystemVerilog and verified through simulation in **Siemens QuestaSim**.
+A five-stage pipelined implementation of a 32-bit MIPS processor, written in Verilog (IEEE 1364-2005) and verified through simulation in **Siemens QuestaSim**.
 
 The project follows the classic pipelined datapath described by Patterson and Hennessy in *Computer Organization and Design*. Instructions move through the **Fetch**, **Decode**, **Execute**, **Memory** and **Write-Back** stages concurrently. Dedicated hardware detects and resolves the data and control hazards that arise when instructions overlap.
 
@@ -127,21 +127,21 @@ The processor assumes that branches are **not taken** and keeps fetching sequent
 ```
 mips-questasim/
 ├── rtl/                    # Synthesizable design sources
-│   ├── mips_top.sv         # Top-level pipelined processor
-│   ├── pc_reg.sv           # Program counter
-│   ├── imem.sv             # Instruction memory
-│   ├── dmem.sv             # Data memory
-│   ├── regfile.sv          # 32 × 32-bit register file
-│   ├── control_unit.sv     # Main decoder
-│   ├── alu_control.sv      # ALU operation decoder
-│   ├── alu.sv              # Arithmetic logic unit
-│   ├── sign_extend.sv      # Immediate sign extension
-│   ├── if_id_reg.sv        # IF/ID pipeline register
-│   ├── id_ex_reg.sv        # ID/EX pipeline register
-│   ├── ex_mem_reg.sv       # EX/MEM pipeline register
-│   ├── mem_wb_reg.sv       # MEM/WB pipeline register
-│   ├── forwarding_unit.sv  # Data-hazard forwarding logic
-│   └── hazard_unit.sv      # Load-use stall and flush logic
+│   ├── mips_top.v          # Top-level pipelined processor
+│   ├── pc_reg.v            # Program counter
+│   ├── imem.v              # Instruction memory
+│   ├── dmem.v              # Data memory
+│   ├── regfile.v           # 32 × 32-bit register file
+│   ├── control_unit.v      # Main decoder
+│   ├── alu_control.v       # ALU operation decoder
+│   ├── alu.v               # Arithmetic logic unit
+│   ├── sign_extend.v       # Immediate sign extension
+│   ├── if_id_reg.v         # IF/ID pipeline register
+│   ├── id_ex_reg.v         # ID/EX pipeline register
+│   ├── ex_mem_reg.v        # EX/MEM pipeline register
+│   ├── mem_wb_reg.v        # MEM/WB pipeline register
+│   ├── forwarding_unit.v   # Data-hazard forwarding logic
+│   └── hazard_unit.v       # Load-use stall and flush logic
 ├── tb/                     # Testbenches (unit and system level)
 ├── programs/               # MIPS assembly tests and their .hex images
 ├── sim/                    # QuestaSim scripts (run.do, wave.do)
@@ -153,8 +153,8 @@ mips-questasim/
 
 ### Prerequisites
 
-- **Siemens QuestaSim** (or ModelSim) with SystemVerilog support
-- *Optional:* **Icarus Verilog** (`iverilog -g2012`) for quick command-line runs without a Questa licence
+- **Siemens QuestaSim** (or ModelSim) with Verilog-2005 support
+- *Optional:* **Icarus Verilog** (`iverilog -g2005`) for quick command-line runs without a Questa licence
 - *Optional:* a MIPS assembler, such as MARS, for producing new `.hex` program images
 
 ### Running a Simulation in QuestaSim
@@ -163,7 +163,7 @@ From the `sim/` directory:
 
 ```tcl
 vlib work
-vlog -sv +cover ../rtl/*.sv ../tb/tb_mips.sv
+vlog +cover ../rtl/*.v ../tb/tb_mips.v
 vsim -coverage work.tb_mips
 do wave.do
 run -all
@@ -172,10 +172,13 @@ run -all
 Or use the Makefile from the repository root:
 
 ```bash
-make sim        # Batch-mode simulation with a pass/fail summary
-make gui        # Open QuestaSim with the pre-configured waveform view
-make clean      # Remove generated simulation artefacts
+make test               # Run every unit testbench with a pass/fail summary
+make test TB=alu        # Run only tb/tb_alu.v
+make gui  TB=alu        # Run one testbench and open its waveform
+make clean              # Remove generated simulation artefacts
 ```
+
+The Makefile uses Icarus Verilog by default. Prefix any target with `SIM=questa` to run it in QuestaSim instead, e.g. `SIM=questa make test`.
 
 ### Loading a Different Program
 
