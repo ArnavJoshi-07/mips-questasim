@@ -124,29 +124,32 @@ The processor assumes that branches are **not taken** and keeps fetching sequent
 
 ## Repository Structure
 
+Every module lives in its own folder with its testbench and an `exec_instructions.txt` that lists the commands to build and run it. Shared building blocks (multiplexers, demultiplexers and flip-flops) live in `library.v` at the root.
+
 ```
 mips-questasim/
-├── rtl/                    # Synthesizable design sources
-│   ├── mips_top.v          # Top-level pipelined processor
-│   ├── pc_reg.v            # Program counter
-│   ├── imem.v              # Instruction memory
-│   ├── dmem.v              # Data memory
-│   ├── regfile.v           # 32 × 32-bit register file
-│   ├── control_unit.v      # Main decoder
-│   ├── alu_control.v       # ALU operation decoder
-│   ├── alu.v               # Arithmetic logic unit
-│   ├── sign_extend.v       # Immediate sign extension
-│   ├── if_id_reg.v         # IF/ID pipeline register
-│   ├── id_ex_reg.v         # ID/EX pipeline register
-│   ├── ex_mem_reg.v        # EX/MEM pipeline register
-│   ├── mem_wb_reg.v        # MEM/WB pipeline register
-│   ├── forwarding_unit.v   # Data-hazard forwarding logic
-│   └── hazard_unit.v       # Load-use stall and flush logic
-├── tb/                     # Testbenches (unit and system level)
+├── library.v               # mux2/4/8, demux2/4/8, df, dfr, dfrl
+├── pc_reg/                 # Program counter
+├── imem/                   # Instruction memory
+├── dmem/                   # Data memory
+├── reg_file/               # 32 × 32-bit register file
+├── control_unit/           # Main decoder
+├── alu_control/            # ALU operation decoder
+├── alu/                    # Arithmetic logic unit
+│   ├── alu.v               #   design
+│   ├── tb_alu.v            #   testbench (module tb)
+│   └── exec_instructions.txt
+├── sign_extend/            # Immediate sign extension
+├── if_id_reg/              # IF/ID pipeline register
+├── id_ex_reg/              # ID/EX pipeline register
+├── ex_mem_reg/             # EX/MEM pipeline register
+├── mem_wb_reg/             # MEM/WB pipeline register
+├── forwarding_unit/        # Data-hazard forwarding logic
+├── hazard_unit/            # Load-use stall and flush logic
+├── mips_top/               # Top-level pipelined processor
 ├── programs/               # MIPS assembly tests and their .hex images
-├── sim/                    # QuestaSim scripts (run.do, wave.do)
 ├── docs/                   # Diagrams, waveform captures and report
-└── Makefile                # Build and simulation shortcuts
+└── Makefile                # Runs every module's testbench at once
 ```
 
 ## Getting Started
@@ -157,24 +160,35 @@ mips-questasim/
 - *Optional:* **Icarus Verilog** (`iverilog -g2005`) for quick command-line runs without a Questa licence
 - *Optional:* a MIPS assembler, such as MARS, for producing new `.hex` program images
 
-### Running a Simulation in QuestaSim
+### Running One Module
 
-From the `sim/` directory:
+Each folder's `exec_instructions.txt` holds the exact commands. For example, for the ALU with Icarus Verilog:
+
+```bash
+cd alu
+iverilog -o test ../library.v alu.v tb_alu.v
+vvp test
+gtkwave tb_alu.vcd
+```
+
+And in QuestaSim:
 
 ```tcl
 vlib work
-vlog +cover ../rtl/*.v ../tb/tb_mips.v
-vsim -coverage work.tb_mips
-do wave.do
+vlog ../library.v alu.v tb_alu.v
+vsim work.tb
+add wave -r /*
 run -all
 ```
 
-Or use the Makefile from the repository root:
+### Running Every Module
+
+The Makefile reads the source list from each folder's `exec_instructions.txt` and runs all the testbenches:
 
 ```bash
-make test               # Run every unit testbench with a pass/fail summary
-make test TB=alu        # Run only tb/tb_alu.v
-make gui  TB=alu        # Run one testbench and open its waveform
+make test               # Run every module's testbench with a pass/fail summary
+make test MOD=alu       # Run only alu/
+make gui  MOD=alu       # Run one module and open its waveform
 make clean              # Remove generated simulation artefacts
 ```
 
@@ -185,7 +199,7 @@ The Makefile uses Icarus Verilog by default. Prefix any target with `SIM=questa`
 Instruction memory is initialised with `$readmemh`. To run another program, assemble it to a hex file of 32-bit words and pass the file to the simulator:
 
 ```bash
-vsim work.tb_mips +PROGRAM=../programs/fibonacci.hex
+vvp test +PROGRAM=../programs/fibonacci.hex
 ```
 
 ## Verification Strategy

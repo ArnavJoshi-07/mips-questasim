@@ -1,8 +1,6 @@
-# Build output
-build/
-
-# Icarus
-*.vvp
+# Icarus output (each module folder builds a binary called "test")
+*/test
+*/test.log
 *.vcd
 
 # QuestaSim / ModelSim

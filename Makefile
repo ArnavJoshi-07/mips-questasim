@@ -1,56 +1,55 @@
-# Simulator: iverilog (default, runs locally) or questa (lab machines)
-#   make test                 run every unit testbench
-#   make test TB=alu          run only tb/tb_alu.v
-#   make gui  TB=alu          run one testbench and open its waveform
+# Runs the testbench in every module folder that has an exec_instructions.txt.
+# The files to compile are taken from the "iverilog -o test ..." line of that
+# file, so exec_instructions.txt stays the single list of sources per module.
+#
+#   make test                 run every module's testbench
+#   make test MOD=alu         run only alu/
+#   make gui  MOD=alu         run one module and open its waveform
 #   make clean                remove build output
 #   SIM=questa make test      same targets using QuestaSim
-SIM   ?= iverilog
-BUILD := build
+SIM ?= iverilog
 
-RTL   := $(wildcard rtl/*.v)
-# Unit testbenches: every tb/tb_<name>.v except the system-level tb_mips.v
-UNIT  := $(filter-out mips,$(patsubst tb/tb_%.v,%,$(wildcard tb/tb_*.v)))
-TB    ?= $(UNIT)
+MODULES := $(patsubst %/exec_instructions.txt,%,$(wildcard */exec_instructions.txt))
+MOD     ?= $(MODULES)
+
+# Shell snippet that sets $files from the module's exec_instructions.txt
+FILES = files=$$(sed -n 's/^iverilog -o test //p' exec_instructions.txt)
 
 ifeq ($(SIM),iverilog)
-  COMPILE = iverilog -g2005 -Wall -s tb_$(T) -o $(BUILD)/tb_$(T).vvp $(RTL) tb/tb_$(T).v
-  RUN     = vvp -n $(BUILD)/tb_$(T).vvp
-  GUI     = gtkwave $(BUILD)/tb_$(TB).vcd
+  COMPILE = iverilog -g2005 -Wall -o test $$files
+  RUN     = vvp -n test
+  GUI     = gtkwave *.vcd
 else ifeq ($(SIM),questa)
-  COMPILE = vlib $(BUILD)/work >/dev/null; vlog -work $(BUILD)/work $(RTL) tb/tb_$(T).v
-  RUN     = vsim -c -work $(BUILD)/work tb_$(T) -do "run -all; quit -f"
-  GUI     = vsim -gui -work $(BUILD)/work tb_$(TB) -do "add wave -r /*; run -all"
+  COMPILE = vlib work >/dev/null; vlog -work work $$files
+  RUN     = vsim -c work.tb -do "run -all; quit -f"
+  GUI     = vsim -gui work.tb -do "add wave -r /*; run -all"
 else
   $(error SIM must be iverilog or questa, got '$(SIM)')
 endif
 
-.PHONY: test gui clean run-one
+.PHONY: test gui clean
 
-# A testbench passes when it compiles, prints a line starting with PASS
-# and prints no line starting with FAIL. Questa prefixes output with "# ".
+# A module passes when it compiles, prints a line starting with PASS and
+# prints no line starting with FAIL. Questa prefixes output with "# ".
 test:
-	@mkdir -p $(BUILD)
 	@pass=0; fail=0; \
-	for t in $(TB); do \
-	  log=$(BUILD)/tb_$$t.log; \
-	  if $(MAKE) -s --no-print-directory run-one T=$$t > $$log 2>&1 \
+	for m in $(MOD); do \
+	  log=$$m/test.log; \
+	  if (cd $$m && $(FILES) && $(COMPILE) && $(RUN)) > $$log 2>&1 \
 	     && grep -Eq '^(# )?PASS' $$log && ! grep -Eq '^(# )?FAIL' $$log; then \
-	    echo "  PASS  $$t"; pass=$$((pass+1)); \
+	    echo "  PASS  $$m"; pass=$$((pass+1)); \
 	  else \
-	    echo "  FAIL  $$t   (see $$log)"; fail=$$((fail+1)); \
+	    echo "  FAIL  $$m   (see $$log)"; fail=$$((fail+1)); \
 	  fi; \
 	done; \
 	echo "$$pass passed, $$fail failed"; \
 	[ $$fail -eq 0 ]
 
-run-one:
-	$(COMPILE)
-	$(RUN)
-
 gui:
-	@[ "$(words $(TB))" = 1 ] || { echo "Pick one testbench: make gui TB=<name>"; exit 1; }
-	@$(MAKE) -s --no-print-directory test TB=$(TB)
-	$(GUI)
+	@[ "$(words $(MOD))" = 1 ] || { echo "Pick one module: make gui MOD=<folder>"; exit 1; }
+	@$(MAKE) -s --no-print-directory test MOD=$(MOD)
+	cd $(MOD) && $(GUI)
 
 clean:
-	rm -rf $(BUILD) work transcript modelsim.ini *.wlf *.vcd *.vvp
+	rm -f */test */test.log */*.vcd */*.wlf */transcript */modelsim.ini
+	rm -rf */work
