@@ -1,0 +1,3 @@
+iverilog -o test alu_control.v tb_alu_control.v
+vvp test
+gtkwave tb_alu_control.vcd
