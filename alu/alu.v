@@ -1,18 +1,7 @@
 // op[3] inverts i0, op[2] inverts i1 (and supplies the carry-in for
 // subtraction), op[1:0] selects the slice output:
 //   0000 and   0001 or   0010 add   0110 sub   0111 slt   1100 nor
-
-module fa(input wire i0, i1, cin, output wire sum, cout);
-wire t0, t1, t2;
-
-assign sum = i0 ^ i1 ^ cin;
-assign t0 = i0 & i1;
-assign t1 = i0 & cin;
-assign t2 = i1 & cin;
-assign cout = t0 | t1 | t2;
-
-endmodule
-
+// The full adder fa is in library.v.
 
 module alu_slice(input wire [3:0] op, input wire i0, i1, cin, less,
                  output wire o, cout);

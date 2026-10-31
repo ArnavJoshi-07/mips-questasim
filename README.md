@@ -124,11 +124,13 @@ The processor assumes that branches are **not taken** and keeps fetching sequent
 
 ## Repository Structure
 
-Every module lives in its own folder with its testbench and an `exec_instructions.txt` that lists the commands to build and run it. Shared building blocks (multiplexers, demultiplexers and flip-flops) live in `library.v` at the root.
+Every module lives in its own folder with its testbench and an `exec_instructions.txt` that lists the commands to build and run it. Shared building blocks (multiplexers, demultiplexers, flip-flops, the full adder and the 32-bit adder) live in `library.v` at the root, and `library/` tests them.
 
 ```
 mips-questasim/
-├── library.v               # mux2/4/8, demux2/4/8, df, dfr, dfrl
+├── library.v               # mux2/4/8, demux2/4/8, df, dfr, dfrl, fa,
+│                           #   adder32, mux2_5/32, mux4_32, dfrl_32
+├── library/                # Testbench for the word-wide library.v modules
 ├── pc_reg/                 # Program counter
 ├── imem/                   # Instruction memory
 ├── dmem/                   # Data memory
@@ -230,7 +232,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 
 | Milestone | Status |
 |-----------|--------|
-| Datapath components and unit tests | ◐ In progress (ALU, register file, sign extend, ALU control, main control, instruction and data memory done) |
+| Datapath components and unit tests | ☑ Done |
 | Single-cycle reference implementation | ☐ Planned |
 | Five-stage pipeline (hazard-free programs) | ☐ Planned |
 | Forwarding unit | ☐ Planned |
