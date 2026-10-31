@@ -202,6 +202,10 @@ Instruction memory is initialised with `$readmemh`. To run another program, asse
 vvp test +PROGRAM=../programs/fibonacci.hex
 ```
 
+Data memory starts at zero. A program that needs preloaded data can supply a second hex file with `+DATA=<file>.hex`.
+
+`programs/fibonacci.asm` is the demo program. It writes the first 12 Fibonacci numbers (0 to 89) to data memory and leaves 89 in `$v0`. Each loop iteration includes a load-use stall, a forwarded result and a taken jump.
+
 ## Verification Strategy
 
 Verification runs at two levels.
@@ -226,7 +230,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 
 | Milestone | Status |
 |-----------|--------|
-| Datapath components and unit tests | ◐ In progress (ALU, register file, sign extend, ALU control, main control done) |
+| Datapath components and unit tests | ◐ In progress (ALU, register file, sign extend, ALU control, main control, instruction and data memory done) |
 | Single-cycle reference implementation | ☐ Planned |
 | Five-stage pipeline (hazard-free programs) | ☐ Planned |
 | Forwarding unit | ☐ Planned |

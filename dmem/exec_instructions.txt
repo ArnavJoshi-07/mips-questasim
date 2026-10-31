@@ -1,0 +1,3 @@
+iverilog -o test dmem.v tb_dmem.v
+vvp test
+gtkwave tb_dmem.vcd
