@@ -139,3 +139,18 @@ module dfrl_32(
         end
     endgenerate
 endmodule
+
+// 5-bit register for the register numbers (rs, rt, rd) the pipeline carries.
+module dfrl_5(
+    input wire clk, reset, load,
+    input wire [4:0] in,
+    output wire [4:0] out
+);
+    genvar k;
+
+    generate
+        for (k = 0; k < 5; k = k + 1) begin : bits
+            dfrl dfrl_k(clk, reset, load, in[k], out[k]);
+        end
+    endgenerate
+endmodule

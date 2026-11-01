@@ -1,0 +1,3 @@
+iverilog -o test ../library.v if_id_reg.v tb_if_id_reg.v
+vvp test
+gtkwave tb_if_id_reg.vcd
