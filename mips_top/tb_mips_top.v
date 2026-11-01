@@ -3,7 +3,9 @@ reg clk, reset;
 wire [31:0] pc, instr;
 integer errors, checks, cycles, retired, w;
 integer fwd_a_mem, fwd_a_wb, fwd_b_mem, fwd_b_wb, stalls;
+integer jump_flushes, branch_flushes;
 reg running, default_program;
+reg [8*256:1] program;
 
 // Every Fibonacci program leaves F(0) .. F(11) in dmem words 0..11
 reg [31:0] expected [0:11];
@@ -116,7 +118,9 @@ always @(posedge clk)
             if (dut.mem_write_mem)
                 $write("  mem[%h] <= %0d", dut.alu_result_mem, dut.write_data_mem);
             if (dut.pc_src_ex)
-                $write("  beq taken -> %h", dut.branch_target_ex);
+                $write("  beq taken -> %h, FLUSH IF/ID+ID/EX", dut.branch_target_ex);
+            else if (dut.jump_flush)
+                $write("  j -> %h, FLUSH IF/ID", dut.jump_addr_id);
             if (dut.forward_a_ex == 2'b10) $write("  A<-EX/MEM");
             if (dut.forward_a_ex == 2'b01) $write("  A<-MEM/WB");
             if (dut.forward_b_ex == 2'b10) $write("  B<-EX/MEM");
@@ -129,6 +133,8 @@ always @(posedge clk)
             fwd_b_mem = fwd_b_mem + (dut.forward_b_ex == 2'b10);
             fwd_b_wb  = fwd_b_wb  + (dut.forward_b_ex == 2'b01);
             stalls    = stalls    + dut.stall;
+            branch_flushes = branch_flushes + dut.pc_src_ex;
+            jump_flushes   = jump_flushes + (dut.jump_flush & ~dut.pc_src_ex);
         end
 
         // Move the instructions along, as the pipeline registers do at this edge
@@ -149,6 +155,7 @@ always @(posedge clk)
 initial begin
     errors = 0; checks = 0; cycles = 0; retired = 0; running = 1'b0;
     fwd_a_mem = 0; fwd_a_wb = 0; fwd_b_mem = 0; fwd_b_wb = 0; stalls = 0;
+    jump_flushes = 0; branch_flushes = 0;
     pc_id = 0; pc_ex = 0; pc_mem = 0; pc_wb = 0;
     instr_id = 0; instr_ex = 0; instr_mem = 0; instr_wb = 0;
     expected[0] = 0;  expected[1] = 1;  expected[2]  = 1;  expected[3]  = 2;
@@ -159,7 +166,7 @@ initial begin
 
     // Without +PROGRAM, load fibonacci_fwd.hex. Done after time 0 so it
     // lands after imem clears its words.
-    default_program = !$test$plusargs("PROGRAM");
+    default_program = !$value$plusargs("PROGRAM=%s", program);
     #1 if (default_program)
         $readmemh("../programs/fibonacci_fwd.hex", dut.imem_0.mem, 0, 21);
 
@@ -201,11 +208,27 @@ initial begin
         check(stalls,    0,  "stalls (the nop covers every load-use)");
     end
 
+    // With flushing, every program runs the same instructions; only the
+    // nops it carries change the cycle count. The beq and j delay-slot nops
+    // of the older programs are now flushed like any wrong-path instruction.
+    // Counts run until the halt reaches WB, so the j count is the 10 loop
+    // jumps plus 2 from the halt jumping to itself on the way there.
+    if (program == "../programs/fibonacci.hex") begin
+        // 90 instructions + 4 to fill the pipeline + 10 load-use stalls
+        // + 10 x 1 cycle for the loop j + 2 for the taken exit beq
+        check(cycles,         116, "cycles");
+        check(stalls,         10,  "stalls");
+        check(branch_flushes, 1,   "branch flushes");
+        check(jump_flushes,   12,  "jump flushes");
+    end
+
     $display("cycles=%0d instructions=%0d CPI=%0d.%02d",
              cycles, retired, cycles / retired, (cycles * 100 / retired) % 100);
     $display("forwards: A<-EX/MEM %0d, A<-MEM/WB %0d, B<-EX/MEM %0d, B<-MEM/WB %0d",
              fwd_a_mem, fwd_a_wb, fwd_b_mem, fwd_b_wb);
     $display("load-use stalls: %0d", stalls);
+    $display("flushes: beq taken %0d (2 cycles each), j %0d (1 cycle each)",
+             branch_flushes, jump_flushes);
 
     if (errors == 0) $display("PASS: tb_mips_top (%0d checks)", checks);
     else             $display("FAIL: tb_mips_top (%0d of %0d checks failed)", errors, checks);

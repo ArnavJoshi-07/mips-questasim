@@ -1,0 +1,48 @@
+[*] GTKWave view of branch and jump flushing (programs/flush_test.hex).
+[*] Run first:  vvp test        (from flush_test/)
+[*] Then:       gtkwave tb_flush_test.vcd flush.gtkw
+[*] Marker on cycle 6: the taken beq of case A in EX flushes IF/ID and ID/EX.
+[*] Scroll to t = 110 for the j of case C, and t = 220 for case E (stall on a j).
+[dumpfile] "tb_flush_test.vcd"
+[timestart] 40
+[size] 1500 800
+[pos] -1 -1
+*3.300000 60 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[signals_width] 300
+[sst_width] 0
+[sst_expanded] 0
+@28
++{clk} tb.dut.clk
+@200
+-IF
+@22
++{pc_if} tb.dut.pc_if[31:0]
++{pc_next} tb.dut.pc_next[31:0]
+@200
+-ID
+@22
++{instr_id} tb.dut.instr_id[31:0]
+@28
++{jump_id} tb.dut.jump_id
+@200
+-EX
+@22
++{instr_ex} tb.instr_ex[31:0]
+@28
++{pc_src_ex (beq taken)} tb.dut.pc_src_ex
+@22
++{branch_target_ex} tb.dut.branch_target_ex[31:0]
+@200
+-Hazard control
+@28
++{stall} tb.dut.stall
++{jump_flush (j and no stall)} tb.dut.jump_flush
++{FLUSH_IF_ID} tb.dut.flush_if_id
++{FLUSH_ID_EX} tb.dut.flush_id_ex
+@200
+-Result counters
+@22
++{$s6 (right path)} tb.dut.reg_file_0.dout[735:704]
++{$s7 (wrong path)} tb.dut.reg_file_0.dout[767:736]
+[pattern_trace] 1
+[pattern_trace] 0

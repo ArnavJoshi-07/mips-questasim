@@ -122,7 +122,14 @@ add  $t1, $t0, $t2     # stalled for one cycle, then forwarded from MEM/WB
 
 The processor assumes that branches are **not taken** and keeps fetching sequentially. If a branch turns out to be taken, the instructions fetched in the meantime are **flushed**: they are turned into no-ops, and the PC is redirected to the branch target, `PC + 4 + (imm << 2)`.
 
-`beq` is resolved in **EX**, so a taken branch flushes the two instructions behind it (IF/ID and ID/EX). `j` needs no register values and is resolved in **ID**, so it flushes only the one instruction in IF/ID.
+`beq` is resolved in **EX**, so a taken branch flushes the two instructions behind it (IF/ID and ID/EX) and costs two cycles. A branch that is not taken costs nothing. `j` needs no register values and is resolved in **ID**, so it flushes only the one instruction in IF/ID and costs one cycle.
+
+```
+flush_if_id = pc_src_ex | (jump_id & ~stall)
+flush_id_ex = pc_src_ex | stall
+```
+
+A jump does not flush while the pipeline is stalled. The hazard unit can stall on a `j`, because it reads the jump's address bits as if they were `rs` and `rt`, and a flush overrides the stall's hold on IF/ID. Flushing then would erase the `j` itself. Instead the `j` waits in ID with the PC frozen, then jumps and flushes one cycle later. `flush_test/` covers this case and the others.
 
 ## Repository Structure
 
@@ -152,6 +159,7 @@ mips-questasim/
 ├── hazard_unit/            # Load-use stall and flush logic
 ├── single_cycle/           # Single-cycle reference processor (CPI 1.0)
 ├── mips_top/               # Top-level pipelined processor
+├── flush_test/             # Directed test of branch and jump flushing on mips_top
 ├── programs/               # MIPS assembly tests and their .hex images
 ├── docs/                   # Diagrams, waveform captures and report
 └── Makefile                # Runs every module's testbench at once
@@ -209,13 +217,15 @@ vvp test +PROGRAM=../programs/fibonacci.hex
 
 Data memory starts at zero. A program that needs preloaded data can supply a second hex file with `+DATA=<file>.hex`.
 
-`programs/fibonacci.asm` is the demo program. It writes the first 12 Fibonacci numbers (0 to 89) to data memory and leaves 89 in `$v0`. Each loop iteration includes a load-use stall, a forwarded result and a taken jump.
+`programs/fibonacci.asm` is the demo program. It writes the first 12 Fibonacci numbers (0 to 89) to data memory and leaves 89 in `$v0`. Each loop iteration includes a load-use stall, a forwarded result and a taken jump. It needs no nops: the pipeline stalls on each load-use and flushes after each taken `beq` and `j`. It takes 116 cycles for 90 instructions (CPI 1.28).
 
 `programs/fibonacci_nops.asm` is the same program with nops inserted so that it runs correctly on a pipeline with no hazard handling. It takes 168 cycles for the same 90 instructions (CPI 1.86).
 
 `programs/fibonacci_fwd.asm` keeps only the nops that forwarding cannot remove: one after each load whose result is used next, and the branch and jump delay slots. Its prologue is reordered so that the program uses all four forwarding paths (EX/MEM and MEM/WB into each ALU operand). It is the default program for `mips_top/` and takes 136 cycles for the same 90 instructions (CPI 1.51).
 
-`programs/fibonacci_stall.asm` drops the load-use nop as well: the hazard unit stalls one cycle instead, 10 times in all. It takes the same 136 cycles, but the program no longer has to know about the hazard. The branch and jump delay slots stay until flushing is in place.
+`programs/fibonacci_stall.asm` drops the load-use nop as well: the hazard unit stalls one cycle instead, 10 times in all. It takes the same 136 cycles, but the program no longer has to know about the hazard. Its branch and jump delay-slot nops are now flushed like any other wrong-path instruction, so the results do not change.
+
+`programs/flush_test.asm` is a directed test for flushing, run by `flush_test/`. It covers a taken and a not-taken `beq`, a `j`, a load-use stall in front of a `beq`, a stall on a `j`, and a taken `beq` with a `j` right behind it. Wrong-path instructions add to `$s7` and right-path ones to `$s6`, so a missed flush shows up in the final registers.
 
 ## Verification Strategy
 
@@ -246,7 +256,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 | Five-stage pipeline (hazard-free programs) | ☑ Done |
 | Forwarding unit | ☑ Done |
 | Load-use stall detection | ☑ Done |
-| Branch and jump handling with flushing | ☐ Planned |
+| Branch and jump handling with flushing | ☑ Done |
 | Full test suite and coverage report | ☐ Planned |
 | Documentation and waveform analysis | ☐ Planned |
 

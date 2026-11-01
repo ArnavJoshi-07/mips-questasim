@@ -55,6 +55,7 @@ prints no line starting with `FAIL`.
 | `hazard_unit` | Load-use hazard detection (stall) |
 | `single_cycle` | Complete single-cycle processor running Fibonacci |
 | `mips_top` | Complete 5-stage pipelined processor running Fibonacci |
+| `flush_test` | Directed test of branch and jump flushing on `mips_top` |
 
 ---
 
@@ -116,6 +117,8 @@ iverilog -o test hazard_unit.v tb_hazard_unit.v
 iverilog -o test ../library.v ../pc_reg/pc_reg.v ../imem/imem.v ../control_unit/control_unit.v ../alu_control/alu_control.v ../reg_file/regfile.v ../sign_extend/sign_extend.v ../alu/alu.v ../dmem/dmem.v mips_single.v tb_mips_single.v
 # mips_top
 iverilog -o test ../library.v ../pc_reg/pc_reg.v ../imem/imem.v ../control_unit/control_unit.v ../alu_control/alu_control.v ../reg_file/regfile.v ../sign_extend/sign_extend.v ../alu/alu.v ../dmem/dmem.v ../if_id_reg/if_id_reg.v ../id_ex_reg/id_ex_reg.v ../ex_mem_reg/ex_mem_reg.v ../mem_wb_reg/mem_wb_reg.v ../forwarding_unit/forwarding_unit.v ../hazard_unit/hazard_unit.v mips_top.v tb_mips_top.v
+# flush_test
+iverilog -o test ../library.v ../pc_reg/pc_reg.v ../imem/imem.v ../control_unit/control_unit.v ../alu_control/alu_control.v ../reg_file/regfile.v ../sign_extend/sign_extend.v ../alu/alu.v ../dmem/dmem.v ../if_id_reg/if_id_reg.v ../id_ex_reg/id_ex_reg.v ../ex_mem_reg/ex_mem_reg.v ../mem_wb_reg/mem_wb_reg.v ../forwarding_unit/forwarding_unit.v ../hazard_unit/hazard_unit.v ../mips_top/mips_top.v tb_flush_test.v
 ```
 
 ---
@@ -127,10 +130,11 @@ is what gets loaded (one instruction word per line, with comments).
 
 | Program | What it is for |
 |---|---|
-| `fibonacci.hex` | Plain Fibonacci, no hazard padding. For the single-cycle core |
+| `fibonacci.hex` | Plain Fibonacci, no hazard padding. Runs on the single-cycle core and on the pipeline (stalls + flushes) |
 | `fibonacci_nops.hex` | Padded with nops for every hazard: works on a pipeline with no forwarding |
 | `fibonacci_fwd.hex` | Only the nops forwarding can't remove (load-use + branch/jump delay slots) |
 | `fibonacci_stall.hex` | Like `_fwd` but without the load-use nop: the hazard unit stalls instead |
+| `flush_test.hex` | Directed test of branch/jump flushing, run by `flush_test/` |
 
 All of them leave F(0)..F(11) in dmem words 0..11 and `$v0 = 89`.
 
@@ -168,7 +172,10 @@ Current results:
 | `fibonacci_nops.hex` | 168 | 1.86 | 0 | PASS |
 | `fibonacci_fwd.hex` (default) | 136 | 1.51 | 0 | PASS |
 | `fibonacci_stall.hex` | 136 | 1.51 | 10 | PASS |
-| `fibonacci.hex` | 116 | 1.13 | 10 | FAIL: runs extra instructions after `beq`/`j`, since branch flushing isn't built yet |
+| `fibonacci.hex` | 116 | 1.28 | 10 | PASS (1 beq flush, 12 j flushes; no nops needed) |
+
+The delay-slot nops in the first three programs are now flushed rather than
+executed, so their results and cycle counts are unchanged.
 
 Each line of the trace shows `PC:instruction` in every stage, then what
 happened that cycle:
@@ -177,7 +184,8 @@ happened that cycle:
 |---|---|
 | `$t0 <= 5` | Register written in WB |
 | `mem[...] <= 5` | Word stored in MEM |
-| `beq taken -> ...` | Branch taken in EX |
+| `beq taken -> ..., FLUSH IF/ID+ID/EX` | Branch taken in EX; the 2 instructions behind it become bubbles |
+| `j -> ..., FLUSH IF/ID` | Jump in ID; the instruction behind it becomes a bubble |
 | `A<-EX/MEM`, `A<-MEM/WB`, `B<-...` | That ALU operand was forwarded |
 | `STALL (load-use)` | Hazard unit stalled this cycle; a bubble (`00:nop`) appears in EX next cycle |
 
@@ -204,6 +212,23 @@ held, a `00000000` bubble in `instr_ex`, then `forward_a_ex = 01` when the
 
 **Run the `vvp` step first.** `make test` reruns the default program and
 overwrites `tb_mips_top.vcd`, which then has no stalls in it.
+
+### Branch and jump flushing (`flush_test`)
+
+```bash
+make test MOD=flush_test                 # build + run, PASS/FAIL
+cd flush_test
+vvp -n test                              # trace of programs/flush_test.hex
+vvp -n test | grep -E 'FLUSH|STALL'      # only the cycles that stall or flush
+gtkwave tb_flush_test.vcd flush.gtkw     # waveform view of the flushes
+cd ..
+```
+
+Expected: `cycles=32 stalls=2 beq flushes=3 j flushes=2`, `$s6 = 6`,
+`$s7 = 0`, `PASS`. `flush.gtkw` opens on cycle 6 (t = 60), where the taken
+`beq` of case A raises `FLUSH_IF_ID` and `FLUSH_ID_EX`. At t = 220 (cycle 22)
+the `j` of case E stalls behind a `lw`: `stall` is high and `jump_flush` stays
+low, so the `j` waits and flushes one cycle later.
 
 ---
 

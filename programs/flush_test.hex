@@ -1,0 +1,33 @@
+// flush_test.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20080005  // 00: addi $t0, $zero, 5
+20090005  // 04: addi $t1, $zero, 5
+200a0007  // 08: addi $t2, $zero, 7
+11090003  // 0c: beq  $t0, $t1, caseB
+22f70001  // 10: addi $s7, $s7, 1
+22f70001  // 14: addi $s7, $s7, 1
+22f70001  // 18: addi $s7, $s7, 1
+22d60001  // 1c: addi $s6, $s6, 1
+110a0014  // 20: beq  $t0, $t2, bad
+22d60001  // 24: addi $s6, $s6, 1
+0800000c  // 28: j    caseD
+22f70001  // 2c: addi $s7, $s7, 1
+22d60001  // 30: addi $s6, $s6, 1
+ac080000  // 34: sw   $t0, 0($zero)
+8c0b0000  // 38: lw   $t3, 0($zero)
+11690002  // 3c: beq  $t3, $t1, caseE
+22f70001  // 40: addi $s7, $s7, 1
+22f70001  // 44: addi $s7, $s7, 1
+22d60001  // 48: addi $s6, $s6, 1
+8c100000  // 4c: lw   $s0, 0($zero)
+08100016  // 50: j    0x00400058
+22f70001  // 54: addi $s7, $s7, 1
+22d60001  // 58: addi $s6, $s6, 1
+10000003  // 5c: beq  $zero, $zero, done
+0800001d  // 60: j    bad
+22f70001  // 64: addi $s7, $s7, 1
+22f70001  // 68: addi $s7, $s7, 1
+22d60001  // 6c: addi $s6, $s6, 1
+0810001c  // 70: j    0x00400070
+22f70064  // 74: addi $s7, $s7, 100
+0810001c  // 78: j    0x00400070

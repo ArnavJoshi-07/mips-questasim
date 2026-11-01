@@ -14,28 +14,37 @@
 // IF/ID hold, ID/EX gets a bubble), after which the loaded value is
 // forwarded from MEM/WB.
 //
-// There are no branch flushes yet, so the program must still avoid the
-// control hazards itself (see programs/fibonacci_stall.asm):
-//   - beq is resolved in EX: the two instructions behind it are fetched
-//     and executed whether or not it is taken;
-//   - j is resolved in ID: the instruction behind it is always executed.
-// flush_if_id is where branch flushing will connect; for now it is tied off.
+// Control hazards are handled by predicting not taken and flushing: the
+// pipeline keeps fetching PC + 4, and when a branch or jump turns out to be
+// taken, the instructions fetched behind it are cleared into bubbles (all
+// zeros, so they write nothing) before they can do any harm.
+//   - j is resolved in ID: the instruction in IF is wrong, so IF/ID is
+//     flushed. 1 cycle lost.
+//   - beq is resolved in EX: the instructions in ID and IF are wrong, so
+//     both ID/EX and IF/ID are flushed. 2 cycles lost when taken, none when
+//     not taken.
+// A jump only flushes when there is no stall. The hazard unit can stall on
+// a j (it compares the j's address bits as if they were rs and rt), and
+// flush wins over load in IF/ID, so flushing then would wipe the j itself
+// while the PC is frozen. Instead the j waits in ID with the PC, and jumps
+// and flushes a cycle later. A taken beq never meets a stall: both need EX,
+// one for the beq and one for a lw.
 //
 // Next PC: a taken branch in EX is older than a jump in ID, so it has the
-// last word.
+// last word, and its flush removes the jump as well.
 
 module mips_top(
     input wire clk, reset,
     output wire [31:0] pc, instr
 );
 
-// Hazard control. stall comes from the hazard unit, after ID/EX.
+// Hazard control. stall comes from the hazard unit (after ID/EX), jump_id
+// from the control unit and pc_src_ex from the branch logic in EX.
+//   flush_if_id = pc_src_ex | (jump_id & ~stall)
+//   flush_id_ex = pc_src_ex | stall
+// The gates are below the wire declarations.
 wire stall, flush_if_id, flush_id_ex;
-wire load_if;
-
-assign flush_if_id = 1'b0;  // tied off until branch flushing is added
-
-not (load_if, stall);       // a stall freezes the PC and IF/ID
+wire load_if, jump_flush;
 
 // IF
 wire [31:0] pc_if, instr_if, pc_plus4_if, pc_jump, pc_next;
@@ -68,6 +77,11 @@ wire [4:0] write_reg_wb;
 
 assign pc = pc_if;
 assign instr = instr_if;
+
+not (load_if, stall);                       // a stall freezes the PC and IF/ID
+and (jump_flush, jump_id, load_if);         // a j flushes IF/ID unless stalled
+or  (flush_if_id, pc_src_ex, jump_flush);
+or  (flush_id_ex, pc_src_ex, stall);        // taken beq, or load-use bubble
 
 
 // ---------------------------------------------------------------- IF
@@ -111,9 +125,9 @@ id_ex_reg id_ex_reg_0(
 );
 
 // Load-use: a lw in EX whose destination (rt) is read by the instruction in
-// ID. The stall holds PC and IF/ID and turns the next ID/EX into a bubble.
+// ID. The stall holds PC and IF/ID and turns the next ID/EX into a bubble
+// (flush_id_ex, at the top).
 hazard_unit hazard_unit_0(mem_read_ex, rt_ex, instr_id[25:21], instr_id[20:16], stall);
-assign flush_id_ex = stall;
 
 
 // ---------------------------------------------------------------- EX
