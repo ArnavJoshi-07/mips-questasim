@@ -1,0 +1,12 @@
+// Initial data memory for bubble_sort.asm, loaded with +DATA: the 10 words
+// to sort, at words 0..9.
+00000022  // 0:   34
+fffffffb  // 1:   -5
+00000059  // 2:   89
+00000000  // 3:    0
+0000000c  // 4:   12
+ffffff9c  // 5: -100
+00000007  // 6:    7
+00000007  // 7:    7
+00000037  // 8:   55
+00000001  // 9:    1

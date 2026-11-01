@@ -160,7 +160,8 @@ mips-questasim/
 ├── single_cycle/           # Single-cycle reference processor (CPI 1.0)
 ├── mips_top/               # Top-level pipelined processor
 ├── flush_test/             # Directed test of branch and jump flushing on mips_top
-├── programs/               # MIPS assembly tests and their .hex images
+├── programs/               # MIPS assembly tests, their .hex/.expect images, asm.py
+├── tests/                  # Program-suite testbench, runner and coverage report
 ├── docs/                   # Diagrams, waveform captures and report
 └── Makefile                # Runs every module's testbench at once
 ```
@@ -233,19 +234,31 @@ Verification runs at two levels.
 
 **Unit tests.** Each building block (ALU, register file, control unit, forwarding unit and hazard unit) has its own testbench that checks its expected behaviour exhaustively or through directed tests.
 
-**System tests.** The top-level testbench loads a program, runs it until it reaches a halt condition, and compares the final register file and data memory against known-good values. It reports a clear **PASS** or **FAIL**. The test suite covers:
+**System tests.** `tests/tb_suite.v` runs a program on the pipeline and on the single-cycle core side by side. When both have halted (a `j` to itself), it checks:
+
+1. **Golden model.** All 32 registers and all 256 data memory words of the pipeline must equal the single-cycle core's, and both must retire the same number of instructions. The single-cycle core has no hazards, so a forwarding, stall or flush bug shows up as a difference.
+2. **Expectations.** Each `.asm` carries `# expect` lines (`# expect $v0 = 89`, `# expect mem[3] = 7`, `# expect stalls = 8`). They catch bugs both cores share, such as one in the ALU, and pin the pipeline's cycle, stall, flush and forwarding counts. `programs/asm.py` assembles the program and checks these lines against its own instruction-set simulator before any Verilog runs.
+3. **Functional coverage.** Every cycle, 46 coverage bins sample the pipeline: each instruction, ALU corner cases, every forwarding path and double hazard, each kind of load-use stall, every flush case, memory corners and writes to `$zero`.
 
 | Test Program | Purpose |
 |--------------|---------|
-| `alu_ops`       | Every arithmetic and logical instruction |
-| `load_store`    | Word-aligned loads and stores |
-| `forwarding`    | EX/MEM and MEM/WB forwarding, including double hazards |
-| `load_use`      | Correct one-cycle stall insertion |
-| `branches`      | Taken and not-taken branches, with pipeline flushes |
-| `fibonacci`     | An end-to-end program combining all of the above |
-| `bubble_sort`   | Heavy memory traffic and tight loop branching |
+| `alu_ops`         | Every ALU instruction with positive, negative and zero operands, immediate limits, 32-bit wrap-around and `slt` across an overflow |
+| `load_store`      | Positive, zero and negative offsets, the last word, load straight after store, load into `$zero`, address wrap above 1 KB |
+| `forwarding`      | Each forwarding path, double hazards, store data, loaded values, `$zero` never forwarded, register-file bypass |
+| `load_use`        | A one-cycle stall for every kind of consumer (R-type, `addi`, `lw`, `sw` data and base, `beq`), and the cases that must not stall |
+| `branches`        | Counted loop, backward branch, branch to the next word, branch behind a branch, `j` behind a `j` |
+| `flush_test`      | Branch and jump flushing, including a stall on a `j` and a `beq` that squashes a `j` |
+| `fibonacci` (+ `_fwd`, `_nops`, `_stall`) | End-to-end program, with and without software nops |
+| `bubble_sort`     | Heavy memory traffic and tight loops, with data preloaded through `+DATA` |
 
-Code coverage is collected through QuestaSim's built-in coverage engine. For each program, the number of cycles and retired instructions is reported so that CPI can be measured.
+```bash
+make suite              # every program, PASS/FAIL with cycles and CPI
+make suite TESTS=load_use
+make coverage           # run the suite and write docs/coverage.md
+SIM=questa make coverage   # also QuestaSim code coverage (UCDB, text and HTML)
+```
+
+[`docs/coverage.md`](docs/coverage.md) holds the latest report: all 11 programs pass and all 46 functional bins are covered. Under QuestaSim the design (not the testbench) is also compiled with statement, branch, condition, expression and toggle coverage; the per-program UCDBs are merged into `tests/build/merged.ucdb` and reported in `tests/build/code_coverage.txt` and `tests/build/coverage_html/`.
 
 ## Project Status
 
@@ -257,7 +270,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 | Forwarding unit | ☑ Done |
 | Load-use stall detection | ☑ Done |
 | Branch and jump handling with flushing | ☑ Done |
-| Full test suite and coverage report | ☐ Planned |
+| Full test suite and coverage report | ☑ Done |
 | Documentation and waveform analysis | ☐ Planned |
 
 ## References

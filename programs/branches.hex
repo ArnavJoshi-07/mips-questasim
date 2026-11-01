@@ -1,0 +1,64 @@
+// branches.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20080005  // 00: addi $t0, $zero, 5
+20090000  // 04: addi $t1, $zero, 0
+01284820  // 08: add  $t1, $t1, $t0
+22d60001  // 0c: addi $s6, $s6, 1
+2108ffff  // 10: addi $t0, $t0, -1
+11000002  // 14: beq  $t0, $zero, a_done
+08000002  // 18: j    loop
+22f70001  // 1c: addi $s7, $s7, 1
+0800000d  // 20: j    b_fwd
+22f70001  // 24: addi $s7, $s7, 1
+22d60001  // 28: addi $s6, $s6, 1
+08000010  // 2c: j    c_start
+22f70001  // 30: addi $s7, $s7, 1
+1000fffc  // 34: beq  $zero, $zero, b_back
+22f70001  // 38: addi $s7, $s7, 1
+22f70001  // 3c: addi $s7, $s7, 1
+11290000  // 40: beq  $t1, $t1, c_next
+22d60001  // 44: addi $s6, $s6, 1
+10000002  // 48: beq  $zero, $zero, d_ok
+10000028  // 4c: beq  $zero, $zero, bad
+22f70001  // 50: addi $s7, $s7, 1
+22d60001  // 54: addi $s6, $s6, 1
+200a0001  // 58: addi $t2, $zero, 1
+11400024  // 5c: beq  $t2, $zero, bad
+114a0002  // 60: beq  $t2, $t2, e_ok
+22f70001  // 64: addi $s7, $s7, 1
+22f70001  // 68: addi $s7, $s7, 1
+22d60001  // 6c: addi $s6, $s6, 1
+2004fff9  // 70: addi $a0, $zero, -7
+2005fff9  // 74: addi $a1, $zero, -7
+10850002  // 78: beq  $a0, $a1, f_ok
+22f70001  // 7c: addi $s7, $s7, 1
+22f70001  // 80: addi $s7, $s7, 1
+22d60001  // 84: addi $s6, $s6, 1
+08000025  // 88: j    g_ok
+0800003c  // 8c: j    bad
+22f70001  // 90: addi $s7, $s7, 1
+22d60001  // 94: addi $s6, $s6, 1
+20028000  // 98: addi $v0, $zero, -32768
+00421020  // 9c: add  $v0, $v0, $v0
+00421020  // a0: add  $v0, $v0, $v0
+00421020  // a4: add  $v0, $v0, $v0
+00421020  // a8: add  $v0, $v0, $v0
+00421020  // ac: add  $v0, $v0, $v0
+00421020  // b0: add  $v0, $v0, $v0
+00421020  // b4: add  $v0, $v0, $v0
+00421020  // b8: add  $v0, $v0, $v0
+00421020  // bc: add  $v0, $v0, $v0
+00421020  // c0: add  $v0, $v0, $v0
+00421020  // c4: add  $v0, $v0, $v0
+00421020  // c8: add  $v0, $v0, $v0
+00421020  // cc: add  $v0, $v0, $v0
+00421020  // d0: add  $v0, $v0, $v0
+00421020  // d4: add  $v0, $v0, $v0
+00421020  // d8: add  $v0, $v0, $v0
+10400004  // dc: beq  $v0, $zero, bad
+22d60001  // e0: addi $s6, $s6, 1
+22d60001  // e4: addi $s6, $s6, 1
+22d60001  // e8: addi $s6, $s6, 1
+0800003d  // ec: j    halt
+22f70064  // f0: addi $s7, $s7, 100
+0800003d  // f4: j    halt

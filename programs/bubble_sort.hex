@@ -1,0 +1,22 @@
+// bubble_sort.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+2010000a  // 00: addi $s0, $zero, 10
+2210ffff  // 04: addi $s0, $s0, -1
+12000010  // 08: beq  $s0, $zero, done
+20110000  // 0c: addi $s1, $zero, 0
+20080000  // 10: addi $t0, $zero, 0
+0210c820  // 14: add  $t9, $s0, $s0
+0339c820  // 18: add  $t9, $t9, $t9
+11190009  // 1c: beq  $t0, $t9, pass_end
+8d090000  // 20: lw   $t1, 0($t0)
+8d0a0004  // 24: lw   $t2, 4($t0)
+0149582a  // 28: slt  $t3, $t2, $t1
+11600003  // 2c: beq  $t3, $zero, no_swap
+ad0a0000  // 30: sw   $t2, 0($t0)
+ad090004  // 34: sw   $t1, 4($t0)
+20110001  // 38: addi $s1, $zero, 1
+21080004  // 3c: addi $t0, $t0, 4
+08000007  // 40: j    inner
+12200001  // 44: beq  $s1, $zero, done
+08000001  // 48: j    outer
+08000013  // 4c: j    halt

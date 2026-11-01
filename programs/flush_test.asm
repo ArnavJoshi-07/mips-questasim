@@ -59,3 +59,15 @@ halt:   j    0x00400070         # j to itself; the testbench stops when it reach
 
 bad:    addi $s7, $s7, 100      # only reached if a branch or j goes wrong
         j    0x00400070
+
+# expect $s6 = 6
+# expect $s7 = 0
+# expect $t3 = 5
+# expect $s0 = 5
+# expect mem[0] = 5
+# expect stalls = 2
+# expect beq_flushes = 3
+# expect j_flushes = 4          # C, E and 2 by the halt
+# 18 right-path instructions + 4 to fill + 2 stalls + 3 x 2 for the beqs
+# + 2 x 1 for the j's:
+# expect cycles = 32

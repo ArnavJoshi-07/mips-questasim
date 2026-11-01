@@ -49,3 +49,27 @@ loop:   beq  $t4, $t3, done     # first time: $t4 from EX/MEM, $t3 from MEM/WB
 
 done:   lw   $v0, -4($s0)       # F(N-1)
 halt:   j    halt               # the testbench stops when this reaches WB
+
+# expect mem[0] = 0
+# expect mem[1] = 1
+# expect mem[2] = 1
+# expect mem[3] = 2
+# expect mem[4] = 3
+# expect mem[5] = 5
+# expect mem[6] = 8
+# expect mem[7] = 13
+# expect mem[8] = 21
+# expect mem[9] = 34
+# expect mem[10] = 55
+# expect mem[11] = 89
+# expect $v0 = 89
+# expect $t4 = 12
+# expect $s0 = 48
+# expect retired = 90
+# 132 instructions with the nops + 4 to fill; forwarding paths as listed at the top:
+# expect cycles = 136
+# expect stalls = 0
+# expect fwd_a_mem = 2
+# expect fwd_a_wb = 11
+# expect fwd_b_mem = 10
+# expect fwd_b_wb = 1

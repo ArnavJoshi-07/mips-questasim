@@ -1,0 +1,29 @@
+// load_store.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20100100  // 00: addi $s0, $zero, 0x100
+2008006f  // 04: addi $t0, $zero, 111
+2009ff22  // 08: addi $t1, $zero, -222
+200a7abc  // 0c: addi $t2, $zero, 0x7abc
+ae080000  // 10: sw   $t0, 0($s0)
+ae090004  // 14: sw   $t1, 4($s0)
+ae0afffc  // 18: sw   $t2, -4($s0)
+ac080000  // 1c: sw   $t0, 0($zero)
+201103fc  // 20: addi $s1, $zero, 0x3fc
+ae290000  // 24: sw   $t1, 0($s1)
+8e120000  // 28: lw   $s2, 0($s0)
+8e130004  // 2c: lw   $s3, 4($s0)
+8e14fffc  // 30: lw   $s4, -4($s0)
+8e350000  // 34: lw   $s5, 0($s1)
+8e160008  // 38: lw   $s6, 8($s0)
+ae0a0008  // 3c: sw   $t2, 8($s0)
+8e170008  // 40: lw   $s7, 8($s0)
+ae090000  // 44: sw   $t1, 0($s0)
+8e0b0000  // 48: lw   $t3, 0($s0)
+8e000004  // 4c: lw   $zero, 4($s0)
+00086020  // 50: add  $t4, $zero, $t0
+ac080408  // 54: sw   $t0, 0x408($zero)
+8c0d0008  // 58: lw   $t5, 8($zero)
+220e0010  // 5c: addi $t6, $s0, 16
+adce0000  // 60: sw   $t6, 0($t6)
+8dcf0000  // 64: lw   $t7, 0($t6)
+0800001a  // 68: j    halt

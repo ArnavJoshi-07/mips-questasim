@@ -1,0 +1,38 @@
+// load_use.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20100028  // 00: addi $s0, $zero, 40
+20080006  // 04: addi $t0, $zero, 6
+2009002c  // 08: addi $t1, $zero, 44
+ae080000  // 0c: sw   $t0, 0($s0)
+ae090004  // 10: sw   $t1, 4($s0)
+ae090008  // 14: sw   $t1, 8($s0)
+20190000  // 18: addi $t9, $zero, 0
+8e040000  // 1c: lw   $a0, 0($s0)
+00882820  // 20: add  $a1, $a0, $t0
+8e060000  // 24: lw   $a2, 0($s0)
+01263822  // 28: sub  $a3, $t1, $a2
+8e020000  // 2c: lw   $v0, 0($s0)
+ae02000c  // 30: sw   $v0, 12($s0)
+8e030008  // 34: lw   $v1, 8($s0)
+ac680000  // 38: sw   $t0, 0($v1)
+8e0a0004  // 3c: lw   $t2, 4($s0)
+8d2b0000  // 40: lw   $t3, 0($t1)
+8e0c0004  // 44: lw   $t4, 4($s0)
+8d8d0022  // 48: lw   $t5, 34($t4)
+8e0e0000  // 4c: lw   $t6, 0($s0)
+21cf0064  // 50: addi $t7, $t6, 100
+8e110000  // 54: lw   $s1, 0($s0)
+12280002  // 58: beq  $s1, $t0, g_ok
+22f70001  // 5c: addi $s7, $s7, 1
+22f70001  // 60: addi $s7, $s7, 1
+8e120000  // 64: lw   $s2, 0($s0)
+20120001  // 68: addi $s2, $zero, 1
+8e130000  // 6c: lw   $s3, 0($s0)
+20140002  // 70: addi $s4, $zero, 2
+0273a820  // 74: add  $s5, $s3, $s3
+8e160000  // 78: lw   $s6, 0($s0)
+20180003  // 7c: addi $t8, $zero, 3
+8e000000  // 80: lw   $zero, 0($s0)
+0000d020  // 84: add  $k0, $zero, $zero
+201b0005  // 88: addi $k1, $zero, 5
+08000023  // 8c: j    halt

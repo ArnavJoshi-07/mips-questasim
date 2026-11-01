@@ -20,7 +20,12 @@ default, or **QuestaSim** (`vlib`, `vlog`, `vsim`) when it is on your PATH.
 | `make test MOD=<folder>` | Runs only one module, e.g. `make test MOD=alu` |
 | `make test MOD="alu dmem"` | Runs several chosen modules |
 | `make gui MOD=<folder>` | Runs one module, then opens its waveform in GTKWave |
-| `make clean` | Deletes build output: `test` binaries, `test.log`, `.vcd`, Questa files |
+| `make clean` | Deletes build output: `test` binaries, `test.log`, `.vcd`, Questa files, `tests/build/` |
+| `make programs` | Assembles every `programs/*.asm` into `.hex` and `.expect` and checks the expectations (§4a) |
+| `make suite` | Runs every program on both cores in `tests/tb_suite.v`, `PASS`/`FAIL` per program (§4a) |
+| `make suite TESTS=<name>` | Runs only `programs/<name>.asm`, e.g. `make suite TESTS=load_use` |
+| `make coverage` | Runs the suite and writes the coverage report `docs/coverage.md` |
+| `SIM=questa make coverage` | Same, plus QuestaSim code coverage in `tests/build/` |
 | `SIM=questa make test` | Same as `make test`, using QuestaSim instead of Icarus |
 | `SIM=questa make gui MOD=<folder>` | Opens the module in the QuestaSim GUI with all signals added |
 
@@ -229,6 +234,52 @@ Expected: `cycles=32 stalls=2 beq flushes=3 j flushes=2`, `$s6 = 6`,
 `beq` of case A raises `FLUSH_IF_ID` and `FLUSH_ID_EX`. At t = 220 (cycle 22)
 the `j` of case E stalls behind a `lw`: `stall` is high and `jump_flush` stays
 low, so the `j` waits and flushes one cycle later.
+
+---
+
+## 4a. Program suite and coverage
+
+`tests/tb_suite.v` runs one program on the pipeline and the single-cycle
+core at once. It passes when every register and data memory word matches
+between the two and every `# expect` line of the `.asm` holds.
+
+```bash
+make suite                                   # all programs (parallel with Icarus)
+make suite TESTS="branches load_use"         # chosen programs
+cat tests/build/load_use.log                 # one program's result and counters
+make coverage                                # suite + docs/coverage.md
+```
+
+Running one program by hand, after `make suite` has built `tests/build/suite`
+(from the repo root):
+
+```bash
+vvp -n tests/build/suite +PROGRAM=programs/load_use.hex +EXPECT=programs/load_use.expect
+vvp -n tests/build/suite +PROGRAM=programs/load_use.hex +TRACE | grep STALL   # per-cycle trace
+vvp -n tests/build/suite +PROGRAM=programs/bubble_sort.hex +DATA=programs/bubble_sort_data.hex +VCD
+gtkwave tb_suite.vcd
+```
+
+| Plusarg | Meaning |
+|---|---|
+| `+PROGRAM=<file.hex>` | Program for both cores (required) |
+| `+DATA=<file.hex>` | Initial data memory |
+| `+EXPECT=<file.expect>` | Expectations written by `programs/asm.py` |
+| `+COV=<file.txt>` | Write the coverage bin counts here |
+| `+TRACE` | Print the pipeline trace, as `tb_mips_top` does |
+| `+VCD` | Dump `tb_suite.vcd` |
+
+Writing a new test program:
+
+```bash
+$EDITOR programs/my_test.asm         # end with "halt: j halt"; add "# expect" lines
+python3 programs/asm.py programs/my_test.asm   # .hex + .expect, checked on the ISA simulator
+make suite TESTS=my_test             # every .asm in programs/ joins the suite automatically
+```
+
+Expectation lines: `# expect $t0 = 5`, `# expect mem[3] = -7` (word index),
+and the pipeline counters `cycles`, `retired`, `stalls`, `beq_flushes`,
+`j_flushes`, `fwd_a_mem`, `fwd_a_wb`, `fwd_b_mem`, `fwd_b_wb`.
 
 ---
 
