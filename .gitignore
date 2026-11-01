@@ -16,3 +16,6 @@ wlft*
 .vscode/
 *.swp
 .DS_Store
+
+# Personal demo notes
+DEMO_COMMANDS.md

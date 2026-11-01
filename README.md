@@ -148,6 +148,7 @@ mips-questasim/
 ├── mem_wb_reg/             # MEM/WB pipeline register
 ├── forwarding_unit/        # Data-hazard forwarding logic
 ├── hazard_unit/            # Load-use stall and flush logic
+├── single_cycle/           # Single-cycle reference processor (CPI 1.0)
 ├── mips_top/               # Top-level pipelined processor
 ├── programs/               # MIPS assembly tests and their .hex images
 ├── docs/                   # Diagrams, waveform captures and report
@@ -233,7 +234,7 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 | Milestone | Status |
 |-----------|--------|
 | Datapath components and unit tests | ☑ Done |
-| Single-cycle reference implementation | ☐ Planned |
+| Single-cycle reference implementation | ☑ Done |
 | Five-stage pipeline (hazard-free programs) | ☐ Planned |
 | Forwarding unit | ☐ Planned |
 | Load-use stall detection | ☐ Planned |
