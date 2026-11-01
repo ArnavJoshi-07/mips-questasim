@@ -1,0 +1,3 @@
+iverilog -o test forwarding_unit.v tb_forwarding_unit.v
+vvp test
+gtkwave tb_forwarding_unit.vcd

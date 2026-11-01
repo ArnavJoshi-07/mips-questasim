@@ -122,6 +122,8 @@ add  $t1, $t0, $t2     # stalled for one cycle, then forwarded from MEM/WB
 
 The processor assumes that branches are **not taken** and keeps fetching sequentially. If a branch turns out to be taken, the instructions fetched in the meantime are **flushed**: they are turned into no-ops, and the PC is redirected to the branch target, `PC + 4 + (imm << 2)`.
 
+`beq` is resolved in **EX**, so a taken branch flushes the two instructions behind it (IF/ID and ID/EX). `j` needs no register values and is resolved in **ID**, so it flushes only the one instruction in IF/ID.
+
 ## Repository Structure
 
 Every module lives in its own folder with its testbench and an `exec_instructions.txt` that lists the commands to build and run it. Shared building blocks (multiplexers, demultiplexers, flip-flops, the full adder and the 32-bit adder) live in `library.v` at the root, and `library/` tests them.
@@ -129,7 +131,7 @@ Every module lives in its own folder with its testbench and an `exec_instruction
 ```
 mips-questasim/
 ├── library.v               # mux2/4/8, demux2/4/8, df, dfr, dfrl, fa,
-│                           #   adder32, mux2_5/32, mux4_32, dfrl_32
+│                           #   adder32, mux2_5/32, mux4_32, dfrl_5/32
 ├── library/                # Testbench for the word-wide library.v modules
 ├── pc_reg/                 # Program counter
 ├── imem/                   # Instruction memory
@@ -209,6 +211,12 @@ Data memory starts at zero. A program that needs preloaded data can supply a sec
 
 `programs/fibonacci.asm` is the demo program. It writes the first 12 Fibonacci numbers (0 to 89) to data memory and leaves 89 in `$v0`. Each loop iteration includes a load-use stall, a forwarded result and a taken jump.
 
+`programs/fibonacci_nops.asm` is the same program with nops inserted so that it runs correctly on a pipeline with no hazard handling. It takes 168 cycles for the same 90 instructions (CPI 1.86).
+
+`programs/fibonacci_fwd.asm` keeps only the nops that forwarding cannot remove: one after each load whose result is used next, and the branch and jump delay slots. Its prologue is reordered so that the program uses all four forwarding paths (EX/MEM and MEM/WB into each ALU operand). It is the default program for `mips_top/` and takes 136 cycles for the same 90 instructions (CPI 1.51).
+
+`programs/fibonacci_stall.asm` drops the load-use nop as well: the hazard unit stalls one cycle instead, 10 times in all. It takes the same 136 cycles, but the program no longer has to know about the hazard. The branch and jump delay slots stay until flushing is in place.
+
 ## Verification Strategy
 
 Verification runs at two levels.
@@ -235,9 +243,9 @@ Code coverage is collected through QuestaSim's built-in coverage engine. For eac
 |-----------|--------|
 | Datapath components and unit tests | ☑ Done |
 | Single-cycle reference implementation | ☑ Done |
-| Five-stage pipeline (hazard-free programs) | ☐ Planned |
-| Forwarding unit | ☐ Planned |
-| Load-use stall detection | ☐ Planned |
+| Five-stage pipeline (hazard-free programs) | ☑ Done |
+| Forwarding unit | ☑ Done |
+| Load-use stall detection | ☑ Done |
 | Branch and jump handling with flushing | ☐ Planned |
 | Full test suite and coverage report | ☐ Planned |
 | Documentation and waveform analysis | ☐ Planned |

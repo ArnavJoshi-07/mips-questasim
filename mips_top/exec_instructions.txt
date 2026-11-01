@@ -1,0 +1,3 @@
+iverilog -o test ../library.v ../pc_reg/pc_reg.v ../imem/imem.v ../control_unit/control_unit.v ../alu_control/alu_control.v ../reg_file/regfile.v ../sign_extend/sign_extend.v ../alu/alu.v ../dmem/dmem.v ../if_id_reg/if_id_reg.v ../id_ex_reg/id_ex_reg.v ../ex_mem_reg/ex_mem_reg.v ../mem_wb_reg/mem_wb_reg.v ../forwarding_unit/forwarding_unit.v ../hazard_unit/hazard_unit.v mips_top.v tb_mips_top.v
+vvp test
+gtkwave tb_mips_top.vcd

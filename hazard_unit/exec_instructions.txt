@@ -1,0 +1,3 @@
+iverilog -o test hazard_unit.v tb_hazard_unit.v
+vvp test
+gtkwave tb_hazard_unit.vcd

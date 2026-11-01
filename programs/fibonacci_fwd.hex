@@ -1,0 +1,24 @@
+// fibonacci_fwd.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20080000  // 00: addi $t0, $zero, 0
+20090001  // 04: addi $t1, $zero, 1
+20100000  // 08: addi $s0, $zero, 0
+ae080000  // 0c: sw   $t0, 0($s0)
+ae090004  // 10: sw   $t1, 4($s0)
+22100008  // 14: addi $s0, $s0, 8
+200b000c  // 18: addi $t3, $zero, 12
+200c0002  // 1c: addi $t4, $zero, 2
+118b000b  // 20: beq  $t4, $t3, done
+00000000  // 24: nop
+00000000  // 28: nop
+8e0dfff8  // 2c: lw   $t5, -8($s0)
+8e0efffc  // 30: lw   $t6, -4($s0)
+00000000  // 34: nop
+01cd7820  // 38: add  $t7, $t6, $t5
+ae0f0000  // 3c: sw   $t7, 0($s0)
+22100004  // 40: addi $s0, $s0, 4
+218c0001  // 44: addi $t4, $t4, 1
+08000008  // 48: j    loop
+00000000  // 4c: nop
+8e02fffc  // 50: lw   $v0, -4($s0)
+08000015  // 54: j    halt

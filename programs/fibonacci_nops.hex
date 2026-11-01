@@ -1,0 +1,29 @@
+// fibonacci_nops.asm assembled for imem: one 32-bit word per line, starting at PC 0.
+// The comment on each line gives the byte address and the source instruction.
+20100000  // 00: addi $s0, $zero, 0
+20080000  // 04: addi $t0, $zero, 0
+20090001  // 08: addi $t1, $zero, 1
+200b000c  // 0c: addi $t3, $zero, 12
+ae080000  // 10: sw   $t0, 0($s0)
+ae090004  // 14: sw   $t1, 4($s0)
+22100008  // 18: addi $s0, $s0, 8
+200c0002  // 1c: addi $t4, $zero, 2
+00000000  // 20: nop
+00000000  // 24: nop
+118b000e  // 28: beq  $t4, $t3, done
+00000000  // 2c: nop
+00000000  // 30: nop
+8e0dfff8  // 34: lw   $t5, -8($s0)
+8e0efffc  // 38: lw   $t6, -4($s0)
+00000000  // 3c: nop
+00000000  // 40: nop
+01ae7820  // 44: add  $t7, $t5, $t6
+00000000  // 48: nop
+00000000  // 4c: nop
+ae0f0000  // 50: sw   $t7, 0($s0)
+22100004  // 54: addi $s0, $s0, 4
+218c0001  // 58: addi $t4, $t4, 1
+0800000a  // 5c: j    loop
+00000000  // 60: nop
+8e02fffc  // 64: lw   $v0, -4($s0)
+0800001a  // 68: j    halt

@@ -1,0 +1,46 @@
+[*] GTKWave view of the first load-use stall (fibonacci_stall.hex, cycle 15).
+[*] Run first:  vvp test +PROGRAM=../programs/fibonacci_stall.hex
+[*] Then:       gtkwave tb_mips_top.vcd load_use_stall.gtkw
+[dumpfile] "tb_mips_top.vcd"
+[timestart] 115
+[size] 1500 800
+[pos] -1 -1
+*3.300000 155 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[signals_width] 260
+[sst_width] 0
+[sst_expanded] 0
+@28
++{clk} tb.dut.clk
+@200
+-IF
+@22
++{pc_if} tb.dut.pc_if[31:0]
+@200
+-ID  (the instruction waiting)
+@22
++{instr_id} tb.dut.instr_id[31:0]
+@24
++{rs_id} tb.dut.hazard_unit_0.rs_id[4:0]
++{rt_id} tb.dut.hazard_unit_0.rt_id[4:0]
+@200
+-EX  (the lw, then the bubble)
+@22
++{instr_ex} tb.instr_ex[31:0]
+@28
++{mem_read_ex} tb.dut.mem_read_ex
+@24
++{rt_ex (lw dest)} tb.dut.rt_ex[4:0]
+@200
+-Hazard unit outputs
+@28
++{STALL} tb.dut.stall
++{load_if (PC, IF/ID)} tb.dut.load_if
++{flush_id_ex (bubble)} tb.dut.flush_id_ex
+@200
+-Forwarding after the stall
+@28
++{forward_a_ex} tb.dut.forward_a_ex[1:0]
+@24
++{write_data_wb} tb.dut.write_data_wb[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
